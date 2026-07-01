@@ -363,6 +363,9 @@ def run_explain(args):
     """지정된 문장들에 대해 Integrated Gradients 및 Occlusion 분석을 수행하고 비교 출력합니다."""
     import sys
     sys.path.append(str(Path(__file__).parent))
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
 
     device = get_device(args.device)
     model, tokenizer = load_model_and_tokenizer(args.model_dir, device)
@@ -463,40 +466,47 @@ def run_explain(args):
         for idx, word in enumerate(words):
             row = f"| {word:<10} |"
             if ig_res:
-                row += f" {ig_res['scores'][idx]:^16.4f} |"
+                ig_val = ig_res['scores'][idx] if idx < len(ig_res['scores']) else 0.0
+                row += f" {ig_val:^16.4f} |"
             if occ_res:
-                row += f" {occ_res['scores'][idx]:^16.4f} |"
+                occ_val = occ_res['scores'][idx] if idx < len(occ_res['scores']) else 0.0
+                row += f" {occ_val:^16.4f} |"
             print(row)
         print("-" * 60)
 
         # Cosine Similarity 및 상관계수 연산 (두 지표가 모두 분석되었고 어절이 2개 이상일 때)
         if ig_res and occ_res and len(words) > 1:
-            try:
-                ig_scores = ig_res["scores"]
-                occ_scores = occ_res["scores"]
-                n = len(ig_scores)
+            if len(ig_res["scores"]) == len(words) and len(occ_res["scores"]) == len(words):
+                try:
+                    ig_scores = ig_res["scores"]
+                    occ_scores = occ_res["scores"]
+                    n = len(ig_scores)
 
-                mean_ig = sum(ig_scores) / n
-                mean_occ = sum(occ_scores) / n
+                    mean_ig = sum(ig_scores) / n
+                    mean_occ = sum(occ_scores) / n
 
-                # Cosine Similarity
-                dot_product = sum(i * o for i, o in zip(ig_scores, occ_scores))
-                sq_sum_ig = sum(i * i for i in ig_scores)
-                sq_sum_occ = sum(o * o for o in occ_scores)
-                cosine_sim = dot_product / ((sq_sum_ig ** 0.5) * (sq_sum_occ ** 0.5)) if (sq_sum_ig > 0 and sq_sum_occ > 0) else 0.0
+                    # Cosine Similarity
+                    dot_product = sum(i * o for i, o in zip(ig_scores, occ_scores))
+                    sq_sum_ig = sum(i * i for i in ig_scores)
+                    sq_sum_occ = sum(o * o for o in occ_scores)
+                    cosine_sim = dot_product / ((sq_sum_ig ** 0.5) * (sq_sum_occ ** 0.5)) if (sq_sum_ig > 0 and sq_sum_occ > 0) else 0.0
 
-                # Pearson Correlation Coefficient
-                num = sum((i - mean_ig) * (o - mean_occ) for i, o in zip(ig_scores, occ_scores))
-                den_ig = sum((i - mean_ig) ** 2 for i in ig_scores)
-                den_occ = sum((o - mean_occ) ** 2 for o in occ_scores)
-                pearson_corr = num / ((den_ig * den_occ) ** 0.5) if (den_ig > 0 and den_occ > 0) else 0.0
+                    # Pearson Correlation Coefficient
+                    num = sum((i - mean_ig) * (o - mean_occ) for i, o in zip(ig_scores, occ_scores))
+                    den_ig = sum((i - mean_ig) ** 2 for i in ig_scores)
+                    den_occ = sum((o - mean_occ) ** 2 for o in occ_scores)
+                    pearson_corr = num / ((den_ig * den_occ) ** 0.5) if (den_ig > 0 and den_occ > 0) else 0.0
 
-                print(f"[기법 간 일치도 분석]")
-                print(f"- Cosine Similarity: {cosine_sim:.4f}")
-                print(f"- Pearson Correlation: {pearson_corr:.4f}")
+                    print(f"[기법 간 일치도 분석]")
+                    print(f"- Cosine Similarity: {cosine_sim:.4f}")
+                    print(f"- Pearson Correlation: {pearson_corr:.4f}")
+                    print("-" * 60)
+                except Exception as e:
+                    print(f"상관도 계산 중 오류: {e}")
+            else:
+                print("[기법 간 일치도 분석 보류]")
+                print("- 한쪽 분석 모듈이 아직 스켈레톤 상태(임시 출력)이므로 일치도를 계산할 수 없습니다.")
                 print("-" * 60)
-            except Exception as e:
-                print(f"상관도 계산 중 오류: {e}")
 
         results.append({
             "text": text,
