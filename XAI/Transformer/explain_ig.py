@@ -41,6 +41,8 @@ def explain_integrated_gradients(model, tokenizer, text, max_length=128, device=
             "probability": 예측된 클래스의 확률
         }
     """
+    
+    # 학습 모드로 전환.
     model.eval()
     
     # 1. 텍스트 토큰화 및 디바이스 이동
