@@ -20,6 +20,7 @@ if __package__ in (None, ""):
 from XAI.LLMComparison import (  # noqa: E402
     collect_llm_explanations,
     compare_llm_with_xai,
+    export_llm_output_json,
     llm_prompt_builder,
     normalize_llm_outputs,
     unify_xai_outputs,
@@ -39,6 +40,7 @@ def run_stage(name: str, argv: list[str], dry_run: bool) -> None:
         "prompts": llm_prompt_builder.main,
         "collect": collect_llm_explanations.main,
         "normalize": normalize_llm_outputs.main,
+        "export_shared": export_llm_output_json.main,
         "compare": compare_llm_with_xai.main,
     }[name]
     exit_code = stage_main(argv)
@@ -58,6 +60,26 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--prompts", type=Path, default=default_dir / "llm_prompts.jsonl")
     parser.add_argument("--llm-explanations", type=Path, default=default_dir / "llm_explanations.jsonl")
     parser.add_argument("--llm-vectors", type=Path, default=default_dir / "llm_vectors.jsonl")
+    parser.add_argument(
+        "--shared-json-output",
+        type=Path,
+        default=xai_root() / "outputs_json" / "output_llm_evidence.json",
+    )
+    parser.add_argument(
+        "--shared-graph-dir",
+        type=Path,
+        default=xai_root() / "outputs_graph" / "llm_evidence",
+    )
+    parser.add_argument(
+        "--shared-index-output",
+        type=Path,
+        default=xai_root() / "outputs_graph" / "llm_index.html",
+    )
+    parser.add_argument(
+        "--shared-summary-output",
+        type=Path,
+        default=xai_root() / "outputs_graph" / "llm_visualization_summary.json",
+    )
     parser.add_argument("--scores-output", type=Path, default=default_dir / "llm_xai_overlap_scores.csv")
     parser.add_argument("--summary-output", type=Path, default=default_dir / "llm_xai_method_summary.csv")
     parser.add_argument("--case-report-output", type=Path, default=default_dir / "qualitative_case_report.md")
@@ -78,6 +100,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--skip-prompts", action="store_true")
     parser.add_argument("--skip-collect", action="store_true")
     parser.add_argument("--skip-normalize", action="store_true")
+    parser.add_argument("--skip-export-shared", action="store_true")
+    parser.add_argument("--skip-export-graphs", action="store_true")
     parser.add_argument("--skip-compare", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args(argv)
@@ -149,6 +173,23 @@ def main(argv: list[str] | None = None) -> int:
             ],
             args.dry_run,
         )
+
+    if not args.skip_export_shared:
+        export_argv = [
+            "--input",
+            str(args.llm_vectors),
+            "--json-output",
+            str(args.shared_json_output),
+            "--graph-dir",
+            str(args.shared_graph_dir),
+            "--index-output",
+            str(args.shared_index_output),
+            "--summary-output",
+            str(args.shared_summary_output),
+        ]
+        if args.skip_export_graphs:
+            export_argv.append("--skip-graphs")
+        run_stage("export_shared", export_argv, args.dry_run)
 
     if not args.skip_compare:
         run_stage(
