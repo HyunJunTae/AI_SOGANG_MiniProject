@@ -25,8 +25,8 @@ CNN_METHOD_FILES = {
     "unigram_occlusion": "output_cnn_unigram_occlusion.json",
     "ngram_occlusion": "output_cnn_ngram_occlusion.json",
     "filter_activation": "output_cnn_filter_activation.json",
-    "integrated_gradients_steps50": "output_cnn_integrated_gradients_steps50.json",
-    "integrated_gradients_steps100": "output_cnn_integrated_gradients_steps100.json",
+    "integrated_gradients_steps50": "output_cnn_ig_50.json",
+    "integrated_gradients_steps100": "output_cnn_ig_100.json",
 }
 
 FNN_METHOD_FILES = {

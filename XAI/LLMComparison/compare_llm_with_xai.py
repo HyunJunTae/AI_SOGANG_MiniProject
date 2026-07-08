@@ -173,6 +173,11 @@ def format_float(value: Any, digits: int = 3) -> str:
     return f"{float(value):.{digits}f}"
 
 
+def markdown_cell(value: Any) -> str:
+    """Format text safely inside a pipe-delimited Markdown table cell."""
+    return str(value).replace("|", ",")
+
+
 def group_rows(rows: list[dict[str, Any]], *keys: str) -> dict[tuple[str, ...], list[dict[str, Any]]]:
     """Group score rows by one or more string fields."""
     grouped: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
@@ -295,7 +300,9 @@ def write_evaluation_report(
         lines.append(
             "| "
             f"{row['sample_id']} | {row['model']} | {row['method']} | "
-            f"{format_float(row['llm_match_score'])} | {row['llm_evidence_words']} | {row['xai_top_words']} |"
+            f"{format_float(row['llm_match_score'])} | "
+            f"{markdown_cell(row['llm_evidence_words'])} | "
+            f"{markdown_cell(row['xai_top_words'])} |"
         )
 
     lines.extend(
@@ -312,7 +319,8 @@ def write_evaluation_report(
             "| "
             f"{row['sample_id']} | {row['model']} | {row['method']} | "
             f"{format_float(row['llm_match_score'])} | {format_float(row['signed_cosine'])} | "
-            f"{row['llm_evidence_words']} | {row['xai_top_words']} |"
+            f"{markdown_cell(row['llm_evidence_words'])} | "
+            f"{markdown_cell(row['xai_top_words'])} |"
         )
 
     lines.extend(["", "## Per-Sample Assessment", ""])
@@ -376,7 +384,7 @@ def write_case_report(
         for row in sorted(by_sample[sample_id], key=lambda item: float(item["llm_match_score"]), reverse=True):
             lines.append(
                 f"| {row['model']} | {row['method']} | {row['prediction']} | "
-                f"{row['xai_top_words']} | {row['llm_match_score']} |"
+                f"{markdown_cell(row['xai_top_words'])} | {row['llm_match_score']} |"
             )
         lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")

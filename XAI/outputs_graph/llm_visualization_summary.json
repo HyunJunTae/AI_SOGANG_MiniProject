@@ -1,0 +1,7 @@
+{
+  "input": "D:\\workspace\\AI_SOGANG_MiniProject_origin_clean\\XAI\\LLMComparison\\comparison_outputs\\llm_vectors.jsonl",
+  "json_output": "D:\\workspace\\AI_SOGANG_MiniProject_origin_clean\\XAI\\outputs_json\\output_llm_evidence.json",
+  "graph_dir": "D:\\workspace\\AI_SOGANG_MiniProject_origin_clean\\XAI\\outputs_graph\\llm_evidence",
+  "sample_chart_count": 30,
+  "index_html": "D:\\workspace\\AI_SOGANG_MiniProject_origin_clean\\XAI\\outputs_graph\\llm_index.html"
+}
